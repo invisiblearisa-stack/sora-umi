@@ -8,9 +8,9 @@
   <meta name="apple-mobile-web-app-title" content="ソラウミ">
   <meta name="theme-color" content="#1C6EF2">
 
-  <!-- ★ ホームアイコン（絶対パス & キャッシュ切り） -->
-  <link rel="apple-touch-icon" href="/sora-umi/apple-touch-icon.png?v=6">
-  <link rel="apple-touch-icon-precomposed" href="/sora-umi/apple-touch-icon.png?v=6">
+  <!-- ★ 相対パスで読み込む（どのパスでも確実） -->
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=7">
+  <link rel="apple-touch-icon-precomposed" href="apple-touch-icon.png?v=7">
 
   <title>ソラウミ</title>
 
@@ -34,7 +34,6 @@
     footer{padding:20px 16px 40px;color:var(--muted);font-size:13px}
   </style>
 
-  <!-- アプリ本体 -->
   <script defer src="app.js"></script>
 </head>
 <body>
@@ -43,7 +42,6 @@
     <p class="sub">就農 → 販売 → 配送までをガイド</p>
   </header>
 
-  <!-- 今日のやること（ウミ） -->
   <section>
     <h2>今日のやること（ウミ）</h2>
     <div class="row">
@@ -53,7 +51,6 @@
     <ul id="tasks"></ul>
   </section>
 
-  <!-- 販売（ソラ） -->
   <section>
     <h2>販売（ソラ）</h2>
     <div class="row">
@@ -68,7 +65,6 @@
     </div>
   </section>
 
-  <!-- 受注・送り状 -->
   <section>
     <h2>受注・送り状</h2>
     <div class="row">
