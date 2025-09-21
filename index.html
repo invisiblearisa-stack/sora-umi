@@ -1,3 +1,55 @@
-<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ソラウミ</title><h1>ソラウミ起動OK</h1>
-<script src="./app.js"></script>
+<!doctype html>
+<html lang="ja">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ソラウミ（MVP）</title>
+<body>
+  <header>
+    <h1>ソラとウミ</h1>
+    <p class="sub">就農→販売→配送までをガイド</p>
+  </header>
+
+  <section>
+    <h2>今日のやること（ウミ）</h2>
+    <ul id="tasks"></ul>
+    <div class="row">
+      <input id="newTask" placeholder="例：除草（30分）">
+      <button id="addTask">追加</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>販売（ソラ）</h2>
+    <div class="row">
+      <input id="pname" placeholder="商品名（例：名久井米 2kg）">
+      <input id="pprice" type="number" inputmode="numeric" placeholder="価格（円）">
+      <input id="pstock" type="number" inputmode="numeric" placeholder="在庫(kg)">
+      <button id="addProduct">商品作成</button>
+    </div>
+    <p id="msg"></p>
+    <ul id="products"></ul>
+  </section>
+
+  <footer>
+    <small>© ソラウミ MVP</small>
+  </footer>
+
+  <!-- Supabase（キー未設定なら無視され、ローカル保存で動作） -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./app.js"></script>
+
+  <style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;margin:0;padding:16px;line-height:1.6}
+    header{padding:6px 0 10px}
+    h1{margin:0} .sub{margin:0;color:#666}
+    section{margin:18px 0}
+    ul{padding-left:20px}
+    .row{display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap}
+    input{flex:1;min-width:120px;padding:10px;border:1px solid #ddd;border-radius:8px}
+    button{padding:10px 14px;border-radius:8px;border:1px solid #ccc;background:white}
+    li.touchable{padding:6px 0}
+    li.touchable:active{opacity:.6}
+    footer{margin-top:20px;color:#888}
+  </style>
+</body>
+</html>
