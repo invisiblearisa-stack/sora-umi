@@ -30,35 +30,94 @@
     footer{ margin-top:20px; color:#8a8f98; font-size:12px }
   </style>
 
-  <!-- ★ ホームアイコン自動生成（青背景＋白い「ソ」） -->
+  <!-- ★ ホームアイコン：2人の農作業イラスト（キャンバスで自動生成・画像アップ不要） -->
   <script>
   (function(){
-    const S = 180; // アイコンサイズ
+    const S = 180;                // アイコンサイズ
     const c = document.createElement('canvas');
     c.width = c.height = S;
     const g = c.getContext('2d');
 
-    // 角丸の青い背景
-    const r = 40;
-    g.fillStyle = '#1e66ff';
-    g.beginPath();
-    g.moveTo(r,0); g.lineTo(S-r,0); g.quadraticCurveTo(S,0,S,r);
-    g.lineTo(S,S-r); g.quadraticCurveTo(S,S,S-r,S);
-    g.lineTo(r,S); g.quadraticCurveTo(0,S,0,S-r);
-    g.lineTo(0,r); g.quadraticCurveTo(0,0,r,0); g.closePath();
-    g.fill();
+    // 背景（空→畑グラデ＋丸角）
+    const r = 36;
+    const path = new Path2D();
+    path.moveTo(r,0); path.lineTo(S-r,0); path.quadraticCurveTo(S,0,S,r);
+    path.lineTo(S,S-r); path.quadraticCurveTo(S,S,S-r,S);
+    path.lineTo(r,S); path.quadraticCurveTo(0,S,0,S-r);
+    path.lineTo(0,r); path.quadraticCurveTo(0,0,r,0);
+    g.clip(path);
+    const sky = g.createLinearGradient(0,0,0,S);
+    sky.addColorStop(0,'#7fb3ff');   // 空
+    sky.addColorStop(0.65,'#bfe0ff');
+    sky.addColorStop(0.65,'#b5d48a'); // 地平
+    sky.addColorStop(1,'#7fb86a');    // 畑
+    g.fillStyle = sky; g.fillRect(0,0,S,S);
 
-    // 白い「ソ」
-    g.fillStyle = '#fff';
-    g.font = 'bold 120px -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif';
-    g.textAlign = 'center';
-    g.textBaseline = 'middle';
-    g.fillText('ソ', S/2, S/2 + 6);
+    // 影の円
+    g.fillStyle = 'rgba(0,0,0,.06)';
+    g.beginPath(); g.ellipse(S/2, S*0.82, S*0.35, S*0.08, 0, 0, Math.PI*2); g.fill();
 
-    // link要素を登録
+    // 共通関数：帽子＋顔（簡易）
+    function person(cx, cy, scale, mirror){
+      const m = mirror ? -1 : 1;
+      g.save();
+      g.translate(cx, cy); g.scale(scale*m, scale);
+
+      // 髪
+      g.fillStyle = '#6b4a34';
+      g.beginPath();
+      g.moveTo(-28, -8); g.quadraticCurveTo(-22, 22, -14, 32);
+      g.quadraticCurveTo(0, 40, 14, 32);
+      g.quadraticCurveTo(22, 22, 28, -8); g.closePath(); g.fill();
+
+      // 顔
+      g.fillStyle = '#f4d4c2';
+      g.beginPath(); g.ellipse(0, 8, 18, 20, 0, 0, Math.PI*2); g.fill();
+
+      // 目
+      g.fillStyle = '#1c2430';
+      g.beginPath(); g.arc(-6, 8, 2.7, 0, Math.PI*2); g.arc(6, 8, 2.7, 0, Math.PI*2); g.fill();
+
+      // 口（右の子は笑顔）
+      g.strokeStyle = '#a25b4b'; g.lineWidth = 2;
+      g.beginPath();
+      if (mirror) { g.arc(0, 14, 4, 0, Math.PI, false); }     // 微笑
+      else        { g.moveTo(-4,14); g.lineTo(4,14); }        // キリッ
+      g.stroke();
+
+      // 帽子（麦わら）
+      // つば
+      g.fillStyle = '#e2c27a';
+      g.beginPath(); g.ellipse(0, -8, 30, 8, 0, 0, Math.PI*2); g.fill();
+      // 山
+      g.fillStyle = '#d9b76a';
+      g.beginPath(); g.ellipse(0, -18, 18, 10, 0, 0, Math.PI*2); g.fill();
+      // 黒帯
+      g.fillStyle = '#3b3b3b';
+      g.fillRect(-14, -14, 28, 4);
+
+      // つなぎ（胸当て）
+      g.fillStyle = mirror ? '#2f6ae6' : '#3f7f6a';
+      g.fillRect(-12, 26, 24, 10);
+      g.restore();
+    }
+
+    // 二人を配置（左＝ソラ、右＝ウミ）
+    person(S*0.36, S*0.52, 1.0, false);
+    person(S*0.64, S*0.52, 1.0, true);
+
+    // 収穫箱
+    g.save();
+    g.translate(S*0.5, S*0.68);
+    g.fillStyle = '#a87942'; g.strokeStyle='#7a542f'; g.lineWidth = 2;
+    g.beginPath(); g.rect(-36, -10, 72, 18); g.fill(); g.stroke();
+    g.fillStyle = '#e3c58b';
+    for(let i=-24;i<=24;i+=16){ g.beginPath(); g.arc(i, -6, 5, 0, Math.PI*2); g.fill(); }
+    g.restore();
+
+    // link要素でホームアイコン登録
     const link = document.createElement('link');
-    link.rel = 'apple-touch-icon';
-    link.sizes = '180x180';
+    link.rel = 'apple-touch-icon'; link.sizes = '180x180';
     link.href = c.toDataURL('image/png');
     document.head.appendChild(link);
   })();
