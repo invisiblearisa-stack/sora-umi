@@ -1,8 +1,39 @@
 <!doctype html>
 <html lang="ja">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>ソラウミ（MVP）</title>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ソラウミ">
+  <meta name="theme-color" content="#1C6EF2">
+  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAABvS4oXAAA...（中略：Base64アイコン）...">
+  <title>ソラウミ</title>
+  <style>
+    :root { --fg:#0f1c28; --muted:#667; }
+    *{ box-sizing:border-box }
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+      margin:0; padding:16px; line-height:1.6; color:var(--fg);
+    }
+    header{ padding:6px 0 10px }
+    h1{ margin:0; font-size:20px }
+    .sub{ margin:0; color:var(--muted); font-size:14px }
+    section{ margin:18px 0 }
+    ul{ padding-left:20px; margin:8px 0 }
+    .row{ display:flex; gap:8px; align-items:center; margin:8px 0; flex-wrap:wrap }
+    input{
+      flex:1; min-width:120px; padding:10px; border:1px solid #ddd; border-radius:10px;
+    }
+    button{
+      padding:10px 14px; border-radius:10px; border:1px solid #cfd6dd; background:#fff;
+    }
+    li.touchable{ padding:6px 0 }
+    li.touchable:active{ opacity:.6 }
+    footer{ margin-top:20px; color:#8a8f98; font-size:12px }
+  </style>
+</head>
+
 <body>
   <header>
     <h1>ソラとウミ</h1>
@@ -21,7 +52,7 @@
   <section>
     <h2>販売（ソラ）</h2>
     <div class="row">
-      <input id="pname" placeholder="商品名（例：名久井米 2kg）">
+      <input id="pname"  placeholder="商品名（例：名久井米 2kg）">
       <input id="pprice" type="number" inputmode="numeric" placeholder="価格（円）">
       <input id="pstock" type="number" inputmode="numeric" placeholder="在庫(kg)">
       <button id="addProduct">商品作成</button>
@@ -31,25 +62,10 @@
   </section>
 
   <footer>
-    <small>© ソラウミ MVP</small>
+    <small>© ソラウミ</small>
   </footer>
 
-  <!-- Supabase（キー未設定なら無視され、ローカル保存で動作） -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./app.js"></script>
-
-  <style>
-    body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;margin:0;padding:16px;line-height:1.6}
-    header{padding:6px 0 10px}
-    h1{margin:0} .sub{margin:0;color:#666}
-    section{margin:18px 0}
-    ul{padding-left:20px}
-    .row{display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap}
-    input{flex:1;min-width:120px;padding:10px;border:1px solid #ddd;border-radius:8px}
-    button{padding:10px 14px;border-radius:8px;border:1px solid #ccc;background:white}
-    li.touchable{padding:6px 0}
-    li.touchable:active{opacity:.6}
-    footer{margin-top:20px;color:#888}
-  </style>
 </body>
 </html>
