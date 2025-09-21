@@ -1,223 +1,91 @@
-/***** 設定：Supabaseを使うときだけ入れる（未設定ならローカル保存） *****/
-const SUPABASE_URL  = "";   // 例: https://xxxx.supabase.co
-const SUPABASE_ANON = "";   // anonキー
-
+const SUPABASE_URL  = "";
+const SUPABASE_ANON = "";
 let store = null, sb = null;
 
-/*** LocalStorage 実装 ***/
 class LocalStore {
-  get(key, def){ try{ return JSON.parse(localStorage.getItem(key)) ?? def }catch{ return def } }
-  set(key, val){ localStorage.setItem(key, JSON.stringify(val)) }
-
+  get(k,d){ try{ return JSON.parse(localStorage.getItem(k)) ?? d }catch{ return d } }
+  set(k,v){ localStorage.setItem(k, JSON.stringify(v)) }
   async listTasks(){ return this.get("tasks", [{title:"除草（30分）",done:false},{title:"水位チェック",done:false}]) }
-  async saveTasks(arr){ this.set("tasks", arr); return true }
-
+  async saveTasks(a){ this.set("tasks", a); return true }
   async listProducts(){ return this.get("products", []) }
-  async addProduct(p){ const arr = await this.listProducts(); arr.push(p); this.set("products", arr) }
-
+  async addProduct(p){ const a=await this.listProducts(); a.push(p); this.set("products", a) }
   async listOrders(){ return this.get("orders", []) }
-  async addOrder(o){ const arr = await this.listOrders(); arr.push(o); this.set("orders", arr) }
-  async deleteOrder(idx){ const arr = await this.listOrders(); arr.splice(idx,1); this.set("orders", arr) }
+  async addOrder(o){ const a=await this.listOrders(); a.push(o); this.set("orders", a) }
+  async deleteOrder(i){ const a=await this.listOrders(); a.splice(i,1); this.set("orders", a) }
 }
+class SupabaseStore extends LocalStore { constructor(){ super(); sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON); } }
+function pickStore(){ if(SUPABASE_URL&&SUPABASE_ANON){ try{ store=new SupabaseStore(); return }catch{} } store=new LocalStore(); }
 
-/*** （オプション）Supabase 実装：必要になったら拡張 ***/
-class SupabaseStore extends LocalStore {
-  constructor(){ super(); sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON); }
-}
-
-/*** どのストアを使うか自動判定 ***/
-function pickStore(){
-  if (SUPABASE_URL && SUPABASE_ANON) {
-    try { store = new SupabaseStore(); return; } catch {}
-  }
-  store = new LocalStore();
-}
-
-/*** 画面描画：Tasks ***/
 async function renderTasks(){
-  const ul = document.getElementById("tasks");
-  const tasks = await store.listTasks();
-  ul.innerHTML = "";
-  tasks.forEach((t)=>{
-    const li = document.createElement("li");
-    li.className = "touchable";
-    li.textContent = (t.done ? "✅ " : "") + t.title;
-    li.onclick = async ()=>{
-      t.done = !t.done;
-      const copy = tasks.map(x => ({...x}));
-      await store.saveTasks(copy);
-      renderTasks();
-    };
+  const ul=document.getElementById("tasks");
+  const t=await store.listTasks(); ul.innerHTML="";
+  t.forEach(x=>{ const li=document.createElement("li"); li.className="touchable";
+    li.textContent=(x.done?"✅ ":"")+x.title;
+    li.onclick=async()=>{ x.done=!x.done; await store.saveTasks(t.map(v=>({...v}))); renderTasks(); };
     ul.appendChild(li);
   });
 }
-
-/*** 画面描画：Products ***/
 async function renderProducts(){
-  const ul = document.getElementById("products");
-  const list = await store.listProducts();
-  ul.innerHTML = "";
-  list.forEach(p=>{
-    const li = document.createElement("li");
-    li.textContent = `${p.name} / ¥${p.price} / 在庫${p.stockKg}kg`;
-    ul.appendChild(li);
-  });
-
-  // 受注フォームのプルダウンにも流し込む
-  const sel = document.getElementById("cProduct");
-  sel.innerHTML = "";
-  const opt0 = document.createElement("option");
-  opt0.value = ""; opt0.textContent = "商品を選択";
-  sel.appendChild(opt0);
-  list.forEach((p,i)=>{
-    const o = document.createElement("option");
-    o.value = i;
-    o.textContent = p.name;
-    sel.appendChild(o);
-  });
+  const ul=document.getElementById("products");
+  const list=await store.listProducts(); ul.innerHTML="";
+  list.forEach(p=>{ const li=document.createElement("li");
+    li.textContent=`${p.name} / ¥${p.price} / 在庫${p.stockKg}kg`; ul.appendChild(li); });
+  const sel=document.getElementById("cProduct"); if(!sel) return;
+  sel.innerHTML=""; const o0=document.createElement("option"); o0.value=""; o0.textContent="商品を選択"; sel.appendChild(o0);
+  list.forEach((p,i)=>{ const o=document.createElement("option"); o.value=i; o.textContent=p.name; sel.appendChild(o); });
 }
-
-/*** 画面描画：Orders ***/
 async function renderOrders(){
-  const ul = document.getElementById("orders");
-  const list = await store.listOrders();
-  ul.innerHTML = "";
-  list.forEach((o, idx)=>{
-    const li = document.createElement("li");
-    const summary = `${o.orderId}：${o.name} / ${o.addr} / ${o.productName} × ${o.qty}`;
-    li.textContent = summary;
-
-    const pdfBtn = document.createElement("button");
-    pdfBtn.textContent = "送り状PDF";
-    pdfBtn.className = "inline-btn";
-    pdfBtn.onclick = ()=> makeLabelPDF(o);
-
-    const delBtn = document.createElement("button");
-    delBtn.textContent = "削除";
-    delBtn.className = "inline-btn";
-    delBtn.onclick = async ()=>{ await store.deleteOrder(idx); renderOrders(); };
-
-    li.appendChild(pdfBtn);
-    li.appendChild(delBtn);
-    ul.appendChild(li);
+  const ul=document.getElementById("orders"); if(!ul) return;
+  const list=await store.listOrders(); ul.innerHTML="";
+  list.forEach((o,idx)=>{
+    const li=document.createElement("li");
+    li.textContent=`${o.orderId}：${o.name} / ${o.addr} / ${o.productName} × ${o.qty}`;
+    const pdf=document.createElement("button"); pdf.textContent="送り状PDF"; pdf.className="inline-btn"; pdf.onclick=()=>makeLabelPDF(o);
+    const del=document.createElement("button"); del.textContent="削除"; del.className="inline-btn";
+    del.onclick=async()=>{ await store.deleteOrder(idx); renderOrders(); };
+    li.appendChild(pdf); li.appendChild(del); ul.appendChild(li);
   });
 }
-
-/*** 受注 → 保存 ***/
 async function addOrderFromForm(){
-  const name = document.getElementById("cName").value.trim();
-  const zip  = document.getElementById("cZip").value.trim();
-  const tel  = document.getElementById("cTel").value.trim();
-  const addr = document.getElementById("cAddr").value.trim();
-  const pIdx = document.getElementById("cProduct").value;
-  const qty  = parseInt(document.getElementById("cQty").value || "1", 10);
-
-  const products = await store.listProducts();
-  if (!name || !addr || !products[pIdx]) { alert("氏名・住所・商品を入力してください"); return; }
-
-  const product = products[pIdx];
-  const orderId = makeOrderId();
-  const order = {
-    orderId, name, zip, tel, addr,
-    productName: product.name, price: product.price, qty,
-    created_at: new Date().toISOString()
-  };
+  const name=v("cName"), zip=v("cZip"), tel=v("cTel"), addr=v("cAddr"), pIdx=document.getElementById("cProduct").value;
+  const qty=parseInt(v("cQty")||"1",10); const products=await store.listProducts();
+  if(!name||!addr||!products[pIdx]){ alert("氏名・住所・商品を入力してください"); return; }
+  const p=products[pIdx]; const order={ orderId:makeOrderId(), name, zip, tel, addr,
+    productName:p.name, price:p.price, qty, created_at:new Date().toISOString() };
   await store.addOrder(order);
-
-  // フォームクリア → リスト更新
-  ["cName","cZip","cTel","cAddr","cQty"].forEach(id=> document.getElementById(id).value = id==="cQty" ? "1" : "");
-  document.getElementById("cProduct").value = "";
+  ["cName","cZip","cTel","cAddr"].forEach(id=>s(id,"")); s("cQty","1"); document.getElementById("cProduct").value="";
   renderOrders();
 }
+function v(id){ return document.getElementById(id)?.value.trim()||"" }
+function s(id,val){ const el=document.getElementById(id); if(el) el.value=val }
+function makeOrderId(){ const d=new Date(), P=n=>String(n).padStart(2,"0");
+  return d.getFullYear()+P(d.getMonth()+1)+P(d.getDate())+"-"+P(d.getHours())+P(d.getMinutes())+P(d.getSeconds()); }
 
-/*** 注文番号（例：20250921-143210） ***/
-function makeOrderId(){
-  const d = new Date();
-  const pad = n => String(n).padStart(2,"0");
-  return d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) +
-         "-" + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds());
-}
-
-/*** 送り状PDF（Canvas→画像→jsPDF） ***/
 function makeLabelPDF(o){
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit:"mm", format:"a6", orientation:"portrait" }); // A6: 105x148mm
-
-  // キャンバスで日本語テキストを描く（システムフォントを使用）
-  const W = 700, H = 980; // 比率はA6に合わせる
-  const canvas = Object.assign(document.createElement("canvas"), { width:W, height:H });
-  const ctx = canvas.getContext("2d");
-
-  // 背景
-  ctx.fillStyle = "#fff"; ctx.fillRect(0,0,W,H);
-  // 枠
-  ctx.strokeStyle = "#222"; ctx.lineWidth = 4; ctx.strokeRect(20,20,W-40,H-40);
-
-  // 見出し
-  ctx.fillStyle = "#0f1c28";
-  ctx.font = "bold 42px -apple-system, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif";
-  ctx.fillText("ソラウミ 送り状", 36, 80);
-
-  // 仕切り線
-  ctx.strokeStyle = "#e5e7eb"; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(30, 100); ctx.lineTo(W-30, 100); ctx.stroke();
-
-  // 本文
-  ctx.fillStyle = "#111";
-  ctx.font = "32px -apple-system, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif";
-  const L = 44;
-  let y = 150;
-  const line = (label, val) => { ctx.fillText(label, 36, y); ctx.fillText(String(val||""), 220, y); y += L; };
-
-  line("注文番号", o.orderId);
-  line("お名前",   o.name);
-  line("郵便番号", o.zip || "");
-  line("住所",     o.addr);
-  line("電話",     o.tel || "");
-  line("商品",     o.productName);
-  line("数量",     o.qty + " 個");
-  line("金額",     "¥" + (o.price*o.qty).toLocaleString());
-
-  // 備考枠
-  ctx.strokeStyle = "#e5e7eb"; ctx.strokeRect(36, y+10, W-72, 140);
-  ctx.fillStyle = "#555"; ctx.fillText("備考", 36, y+0);
-
-  // キャンバスをPDFへ
-  const img = canvas.toDataURL("image/png");
-  // A6の横幅にフィットさせる（縦は自動）
-  doc.addImage(img, "PNG", 0, 0, 105, 105 * (H/W));
-  doc.save(`label-${o.orderId}.pdf`);
+  const { jsPDF }=window.jspdf; const doc=new jsPDF({unit:"mm",format:"a6",orientation:"portrait"});
+  const W=700,H=980; const c=Object.assign(document.createElement("canvas"),{width:W,height:H}), g=c.getContext("2d");
+  g.fillStyle="#fff"; g.fillRect(0,0,W,H); g.strokeStyle="#222"; g.lineWidth=4; g.strokeRect(20,20,W-40,H-40);
+  g.fillStyle="#0f1c28"; g.font="bold 42px -apple-system, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif"; g.fillText("ソラウミ 送り状",36,80);
+  g.strokeStyle="#e5e7eb"; g.lineWidth=2; g.beginPath(); g.moveTo(30,100); g.lineTo(W-30,100); g.stroke();
+  g.fillStyle="#111"; g.font="32px -apple-system, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif";
+  const L=44; let y=150; const line=(a,b)=>{ g.fillText(a,36,y); g.fillText(String(b||""),220,y); y+=L; };
+  line("注文番号",o.orderId); line("お名前",o.name); line("郵便番号",o.zip||""); line("住所",o.addr);
+  line("電話",o.tel||""); line("商品",o.productName); line("数量",o.qty+" 個"); line("金額","¥"+(o.price*o.qty).toLocaleString());
+  g.strokeStyle="#e5e7eb"; g.strokeRect(36,y+10,W-72,140); g.fillStyle="#555"; g.fillText("備考",36,y+0);
+  const img=c.toDataURL("image/png"); doc.addImage(img,"PNG",0,0,105,105*(H/W)); doc.save(`label-${o.orderId}.pdf`);
 }
 
-/*** 起動処理 ***/
 document.addEventListener("DOMContentLoaded", async ()=>{
   pickStore();
-  await renderTasks();
-  await renderProducts();
-  await renderOrders();
-
-  document.getElementById("addTask").onclick = async ()=>{
-    const box = document.getElementById("newTask");
-    const tasks = await store.listTasks();
-    if (box.value.trim()) {
-      tasks.push({ title: box.value.trim(), done:false });
-      await store.saveTasks(tasks);
-      box.value = "";
-      renderTasks();
-    }
-  };
-
-  document.getElementById("addProduct").onclick = async ()=>{
-    const name  = document.getElementById("pname").value.trim() || "名久井米 2kg（白米）";
-    const price = parseInt(document.getElementById("pprice").value || "1680", 10);
-    const stock = parseFloat(document.getElementById("pstock").value || "30");
-    await store.addProduct({ name, price, stockKg: stock, created_at:new Date().toISOString() });
-    document.getElementById("pname").value = "";
-    document.getElementById("pprice").value = "";
-    document.getElementById("pstock").value = "";
-    document.getElementById("msg").textContent = "商品を作成しました！";
-    renderProducts();
-  };
-
-  document.getElementById("addOrder").onclick = addOrderFromForm;
+  await renderTasks(); await renderProducts(); await renderOrders();
+  byId("addTask",btn=>btn.onclick=async()=>{ const box=document.getElementById("newTask");
+    const t=await store.listTasks(); if(box.value.trim()){ t.push({title:box.value.trim(),done:false});
+    await store.saveTasks(t); box.value=""; renderTasks(); }});
+  byId("addProduct",btn=>btn.onclick=async()=>{ const name=v("pname")||"名久井米 2kg（白米）";
+    const price=parseInt(v("pprice")||"1680",10); const stock=parseFloat(v("pstock")||"30");
+    await store.addProduct({name,price,stockKg:stock,created_at:new Date().toISOString()});
+    s("pname",""); s("pprice",""); s("pstock",""); const m=document.getElementById("msg"); if(m) m.textContent="商品を作成しました！";
+    renderProducts(); });
+  byId("addOrder",btn=>btn.onclick=addOrderFromForm);
 });
+function byId(id,fn){ const el=document.getElementById(id); if(el) fn(el) }
