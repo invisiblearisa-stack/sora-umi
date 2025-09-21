@@ -1,8 +1,8 @@
-/***** 設定（あとでSupabase化する時だけ値を入れる） *****/
-const SUPABASE_URL  = "";  // 例: https://xxxx.supabase.co
-const SUPABASE_ANON = "";  // anonキー
+/***** 設定：Supabaseを使うときだけ入れる *****/
+const SUPABASE_URL  = "";   // 例: https://xxxx.supabase.co
+const SUPABASE_ANON = "";   // anonキー
 
-/***** データ層（Supabaseが未設定ならLocalStorageを自動使用） *****/
+/***** データ層（未設定ならLocalStorageを自動使用） *****/
 let store = null, sb = null;
 
 class LocalStore {
@@ -18,8 +18,8 @@ class SupabaseStore extends LocalStore {
   constructor(){ super(); sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON); }
   async listTasks(){ const {data,error}=await sb.from("tasks").select("*").order("id"); if(error) throw error; return data }
   async saveTasks(arr){
-    // upsert全部（簡易）
-    const { error } = await sb.from("tasks").upsert(arr.map((t,i)=>({ id:i+1, title:t.title, done:t.done })));
+    const rows = arr.map((t,i)=>({ id:i+1, title:t.title, done:t.done }));
+    const { error } = await sb.from("tasks").upsert(rows, { onConflict:"id" });
     if(error) throw error; return true;
   }
   async listProducts(){ const {data,error}=await sb.from("products").select("*").order("id"); if(error) throw error; return data }
@@ -28,7 +28,7 @@ class SupabaseStore extends LocalStore {
 
 function pickStore(){
   if (SUPABASE_URL && SUPABASE_ANON) {
-    try { store = new SupabaseStore(); return; } catch { /* fall back */ }
+    try { store = new SupabaseStore(); return; } catch { /* fallback */ }
   }
   store = new LocalStore();
 }
@@ -38,7 +38,7 @@ async function renderTasks(){
   const ul = document.getElementById("tasks");
   const tasks = await store.listTasks();
   ul.innerHTML = "";
-  tasks.forEach((t,idx)=>{
+  tasks.forEach((t)=>{
     const li = document.createElement("li");
     li.className = "touchable";
     li.textContent = (t.done ? "✅ " : "") + t.title;
